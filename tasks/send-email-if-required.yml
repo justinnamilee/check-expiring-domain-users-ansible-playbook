@@ -56,7 +56,7 @@
           {{ '%Y-%m-%d %H:%M:%S' | strftime }} INFO:
           {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
           {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
-          email sent successfully to {{ item.EmailAddress }}
+          email sent successfully to {{ sub_override_to | default(item.EmailAddress) }}
       when: mail_result is succeeded
 
     - name: "Log: E-mail Failed to Send for {{ item.DisplayName }}"
@@ -68,7 +68,7 @@
           {{ '%Y-%m-%d %H:%M:%S' | strftime }} ERROR:
           {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
           {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
-          email send FAILED to {{ item.EmailAddress }}
+          email send FAILED to {{ sub_override_to | default(item.EmailAddress) }}
       when: mail_result is failed
 
 - name: "Log: No E-mail on File for {{ item.DisplayName }}"
