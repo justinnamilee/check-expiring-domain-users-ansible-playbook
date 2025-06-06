@@ -54,8 +54,8 @@ Many organizations enforce password‐expiration policies for Active Directory u
 1. **Clone this repository**
    ```bash
 
-   git clone https://github.com/your-org/ansible-ad-password‐expiry.git
-   cd ansible-ad-password‐expiry
+   git clone https://github.com/justinnamilee/check-expiring-domain-users-ansible-playbook
+   cd check-expiring-domain-users-ansible-playbook
 
    ```
 
