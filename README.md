@@ -34,10 +34,8 @@ Many organizations enforce password‐expiration policies for Active Directory u
 - **Ansible Control Node**
   - Ansible 2.9+ (tested with 2.9.x and 2.10.x)
   - Python 3.6+ (with Jinja2, which ships with Ansible)
-  - `pywinrm` & `xmltodict` (if you’ll be using WinRM for Windows targets):
-    ```bash
-    pip install "pywinrm>=0.4.2" "xmltodict>=0.12.0"
-    ```
+  - WinRM, see https://docs.ansible.com/ansible/latest/os_guide/windows_winrm.html for more details.
+
 - **Windows Domain Controller or Server**
   - PowerShell 5.1 (or higher)
   - WinRM enabled & configured to accept remote commands
