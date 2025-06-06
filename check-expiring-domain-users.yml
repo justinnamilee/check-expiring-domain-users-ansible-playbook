@@ -281,6 +281,7 @@
         sub_email_branding: "{{ email_branding }}"
         sub_expiring_template_path: "{{ playbook_dir }}/{{ expiring_template_path }}"
         sub_expired_template_path: "{{ playbook_dir }}/{{ expired_template_path }}"
+        sub_override_to: "{{ override_to | default(omit) }}"
       loop: "{{ expiring_user_list }}"
       loop_control:
         label: "{{ item.DisplayName }}"

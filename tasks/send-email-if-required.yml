@@ -31,7 +31,7 @@
         host: "{{ sub_smtp_host }}"
         port: "{{ sub_smtp_port }}"
         from: "{{ sub_email_from }}"
-        to: "{{ override_to | default(item.EmailAddress) }}"
+        to: "{{ sub_override_to | default(item.EmailAddress) }}"
         body: "{{ lookup('template', chosen_template) }}"
         subtype: "html"
         subject: >-
