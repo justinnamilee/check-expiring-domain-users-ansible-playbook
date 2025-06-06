@@ -38,8 +38,7 @@
       assert:
         that:
           - password_expiry_threshold is defined
-          - password_expiry_threshold is integer
-          - password_expiry_threshold > 0
+          - (password_expiry_threshold | int) > 0
         fail_msg: >
           'password_expiry_threshold' must be a positive integer in vars/config.yml.
 
@@ -87,8 +86,7 @@
       assert:
         that:
           - smtp_port is defined
-          - smtp_port is integer
-          - smtp_port > 0
+            - (smtp_port | int) > 0
         fail_msg: >
           'smtp_port' must be a positive integer in vars/config.yml.
 
