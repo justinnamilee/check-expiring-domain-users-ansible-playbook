@@ -86,7 +86,7 @@
       assert:
         that:
           - smtp_port is defined
-            - (smtp_port | int) > 0
+          - (smtp_port | int) > 0
         fail_msg: >
           'smtp_port' must be a positive integer in vars/config.yml.
 
