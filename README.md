@@ -98,25 +98,25 @@ Many organizations enforce password‐expiration policies for Active Directory u
 ## Usage
 
 1. **Run the Playbook**
-   From the project root:
+   * From the project root:
 
-   ```bash
+     ```bash
 
-   ansible-playbook check-expiring-domain-users.yml
+     ansible-playbook check-expiring-domain-users.yml
 
-  ```
+     ```
 
-* **Testing (with an override e-mail)**
-  To avoid sending real notices while you’re testing, add an extra variable `override_to`:
+   * **Testing (with an override e-mail)**
+     To avoid sending real notices while you’re testing, add an extra variable `override_to`:
 
-  ```bash
+     ```bash
 
-  ansible-playbook check-expiring-domain-users.yml \
-    -e "override_to=your-test-address@example.com"
+     ansible-playbook check-expiring-domain-users.yml \
+       -e "override_to=your-test-address@example.com"
 
-  ```
+     ```
 
-  This forces **all** “to:” values in the playbook’s `mail:` tasks to go to `your-test-address@example.com` instead of each user’s actual address.
+     This forces **all** “to:” values in the playbook’s `mail:` tasks to go to `your-test-address@example.com` instead of each user’s actual address.
 
 2. **Check Logs**
 
