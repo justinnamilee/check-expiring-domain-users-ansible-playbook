@@ -1,0 +1,3 @@
+vars/config.yml
+templates/overrides/*
+!templates/overrides/README.md
