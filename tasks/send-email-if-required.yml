@@ -1,0 +1,98 @@
+- name: "Normalize 'days_to_expire' if Required for {{ item.DisplayName }}"
+  delegate_to: localhost
+  set_fact:
+    days_to_expire: "{{ item.DaysToExpire | default(0) }}"
+
+- name: "Generate Boolean Values for Descision Making for {{ item.DisplayName }}"
+  delegate_to: localhost
+  set_fact:
+    needs_notice: "{{ (days_to_expire | int) <= (sub_password_expiry_threshold | int) }}"
+    has_email: "{{ (item.EmailAddress | default('') | length) > 0 }}"
+
+- name: "If Expiring or Expired AND E-mail Exists, Then Attempt to Send to {{ item.DisplayName }}"
+  delegate_to: localhost
+  when:
+    - has_email | bool
+    - needs_notice | bool
+  block:
+
+    - name: "Select Correct E-mail Template for {{ item.DisplayName }}"
+      set_fact:
+        chosen_template: >-
+          {%- if (days_to_expire | int) <= 0 -%}
+          {{ sub_expired_template_path }}
+          {%- else -%}
+          {{ sub_expiring_template_path }}
+          {%- endif -%}
+
+    - name: "Send Password Expiry/Expired E-mail to {{ item.DisplayName }}"
+      delegate_to: localhost
+      mail:
+        host: "{{ sub_smtp_host }}"
+        port: "{{ sub_smtp_port }}"
+        from: "{{ sub_email_from }}"
+        to: "{{ item.EmailAddress }}"
+        body: "{{ lookup('template', chosen_template) }}"
+        subtype: "html"
+        subject: >-
+          {%- if (days_to_expire | int) <= 0 -%}
+          [Action Required] Your password has expired...
+          {%- else -%}
+          [Action Required] Your password will expire in {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %}...
+          {%- endif -%}
+      vars:
+        display_name: "{{ item.DisplayName }}"
+        samaccountname: "{{ item.SamAccountName }}"
+        days_to_expire: "{{ item.DaysToExpire }}"
+      register: mail_result
+      ignore_errors: true
+
+    - name: "Log: E-mail Sent Successfully for {{ item.DisplayName }}"
+      delegate_to: localhost
+      lineinfile:
+        path: "{{ sub_log_file }}"
+        insertafter: EOF
+        line: >-
+          {{ '%Y-%m-%d %H:%M:%S' | strftime }} INFO:
+          {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
+          {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
+          email sent successfully to {{ item.EmailAddress }}
+      when: mail_result is succeeded
+
+    - name: "Log: E-mail Failed to Send for {{ item.DisplayName }}"
+      delegate_to: localhost
+      lineinfile:
+        path: "{{ sub_log_file }}"
+        insertafter: EOF
+        line: >-
+          {{ '%Y-%m-%d %H:%M:%S' | strftime }} ERROR:
+          {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
+          {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
+          email send FAILED to {{ item.EmailAddress }}
+      when: mail_result is failed
+
+- name: "Log: No E-mail on File for {{ item.DisplayName }}"
+  delegate_to: localhost
+  when: not (has_email | bool)
+  lineinfile:
+    path: "{{ sub_log_file }}"
+    insertafter: EOF
+    line: >-
+      {{ '%Y-%m-%d %H:%M:%S' | strftime }} WARNING:
+      {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
+      {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
+      NO e-mail on file
+
+- name: "Log: Has E-mail but Not Expiring Soon for {{ item.DisplayName }}"
+  delegate_to: localhost
+  when:
+    - has_email | bool
+    - not (needs_notice | bool)
+  lineinfile:
+    path: "{{ sub_log_file }}"
+    insertafter: EOF
+    line: >-
+      {{ '%Y-%m-%d %H:%M:%S' | strftime }} INFO:
+      {{ item.DisplayName }} ({{ item.SamAccountName }}) expires in
+      {{ item.DaysToExpire }} day{% if item.DaysToExpire != 1 %}s{% endif %} —
+      no notice needed

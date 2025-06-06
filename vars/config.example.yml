@@ -1,0 +1,49 @@
+# Name a Windows Domain Controller or Applicable Box to Run PowerShell Script Against
+# Note: You can define multiple if you expect different results from each...
+# Note: But this is not typical; you should just set this to your PDC, probably.
+target_hosts: ""
+
+# How many days before expiry to warn
+password_expiry_threshold: 14
+
+# Filter used to select which accounts are in scope (see Get-AdUser in PowerShell)
+get_aduser_filter: "Enabled -eq $true -and PasswordNeverExpires -eq $false"
+
+# Where to store logs on the control node and how many days to keep
+log_dir: "/path/to/expiry/log/dir"
+log_age: "7d"
+
+log_file_owner: "ansible"
+log_file_group: "ansible"
+log_file_mode: "0640"
+
+log_dir_owner: "ansible"
+log_dir_group: "ansible"
+log_dir_mode: "0750"
+
+# SMTP relay here; should allow the playbook to send mail
+smtp_host: "127.0.0.1"
+smtp_port: 25
+
+# Email “From:” address
+email_from: "netadmin@yourdomain.org"
+
+# E-mail branding settings
+email_branding:
+  company_name: "ABC"             # short name used in front of company assets
+  admin_team_name: "ABC Network Administration"
+  admin_person_title: "ABC Network Administrator"
+  office_locations: "Lewisville or Austin"
+  admin_email: "netadmin@yourdomain.org"
+  company_brand: "ABC Corporation"   # full company name
+  password_change_url: "https://password-change.domain.local/"
+
+# Path to the PowerShell Jinja2 template
+script_template_path: "templates/check-password-expiry.ps1.j2"
+
+# Path to the Jinja2 templates for the e-mail bodies
+expiring_template_path: "templates/password-is-expiring.html.j2"
+expired_template_path: "templates/password-is-expired.html.j2"
+
+# “Today” for naming log files; by default, pulls current date in YYYY-MM-DD
+today: "{{ lookup('pipe','date +%Y-%m-%d') }}"

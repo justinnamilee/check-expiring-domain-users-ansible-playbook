@@ -1,0 +1,286 @@
+- name: "❗ Check That 'vars/config.yml' File is Present"
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: "Stat the File"
+      stat:
+        path: vars/config.yml
+      register: config_file
+
+    - name: "Fail if 'vars/config.yml' Does Not Exist"
+      assert:
+        that:
+          - config_file.stat.exists
+        fail_msg: >
+          'vars/config.yml' not found...
+          Please create 'vars/config.yml' before running this playbook.  See example provided.
+
+
+- name: "🔍 Validate Contents of 'vars/config.yml'"
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - vars/config.yml
+
+  tasks:
+    - name: "Fail if 'target_hosts' is Missing or Empty"
+      assert:
+        that:
+          - target_hosts is defined
+          - target_hosts | trim != ""
+        fail_msg: >
+          'target_hosts' must be defined and non-empty in vars/config.yml.
+
+    - name: "Fail if 'password_expiry_threshold' is Not a Positive Integer"
+      assert:
+        that:
+          - password_expiry_threshold is defined
+          - password_expiry_threshold is integer
+          - password_expiry_threshold > 0
+        fail_msg: >
+          'password_expiry_threshold' must be a positive integer in vars/config.yml.
+
+    - name: "Fail if 'get_aduser_filter' is Missing or Empty"
+      assert:
+        that:
+          - get_aduser_filter is defined
+          - get_aduser_filter | trim != ""
+        fail_msg: >
+          'get_aduser_filter' must be defined and non-empty in vars/config.yml.
+
+    - name: "Fail if 'log_dir' is Missing or Empty"
+      assert:
+        that:
+          - log_dir is defined
+          - log_dir | trim != ""
+        fail_msg: >
+          'log_dir' must be defined and non-empty in vars/config.yml.
+
+    - name: "Fail if 'log_age' is Not a Valid Duration"
+      assert:
+        that:
+          - log_age is defined
+          - log_age is match('^[0-9]+[smhdw]$')
+        fail_msg: >
+          'log_age' must be defined in vars/config.yml and in a format like '7d', '24h', etc.
+
+    - name: "Fail if 'email_from' is Not a Valid Email Address"
+      assert:
+        that:
+          - email_from is defined
+          - email_from is match('^[^@]+@[^@]+\\.[^@]+$')
+        fail_msg: >
+          'email_from' must be defined in vars/config.yml and conform to a basic email format (user@domain.tld).
+
+    - name: "Fail if 'smtp_host' is Missing or Empty"
+      assert:
+        that:
+          - smtp_host is defined
+          - smtp_host | trim != ""
+        fail_msg: >
+          'smtp_host' must be defined and non-empty in vars/config.yml.
+
+    - name: "Fail if 'smtp_port' is Not a Positive Integer"
+      assert:
+        that:
+          - smtp_port is defined
+          - smtp_port is integer
+          - smtp_port > 0
+        fail_msg: >
+          'smtp_port' must be a positive integer in vars/config.yml.
+
+    - name: "Fail if 'email_branding' or Any Required Subkey is Missing or Not a String"
+      assert:
+        that:
+          - email_branding is defined
+          - email_branding.company_name is defined
+          - email_branding.company_name is string
+          - email_branding.admin_team_name is defined
+          - email_branding.admin_team_name is string
+          - email_branding.admin_person_title is defined
+          - email_branding.admin_person_title is string
+          - email_branding.office_locations is defined
+          - email_branding.office_locations is string
+          - email_branding.admin_email is defined
+          - email_branding.admin_email is string
+          - email_branding.company_brand is defined
+          - email_branding.company_brand is string
+          - email_branding.password_change_url is defined
+          - email_branding.password_change_url is string
+        fail_msg: >
+          'email_branding' and all required subkeys (company_name, admin_team_name,
+          admin_person_title, office_locations, admin_email, company_brand,
+          password_change_url) must be defined in vars/config.yml and be strings.
+
+    - name: "Stat 'script_template_path'"
+      stat:
+        path: "{{ script_template_path }}"
+      register: script_template_stat
+
+    - name: "Fail if 'script_template_path' Does Not Exist or is Not a File"
+      assert:
+        that:
+          - script_template_stat.stat.exists
+          - script_template_stat.stat.isreg
+        fail_msg: >
+          'script_template_path' ({{ script_template_path }}) does not exist or is not a regular file.
+
+    - name: "Stat 'expiring_template_path'"
+      stat:
+        path: "{{ expiring_template_path }}"
+      register: expiring_template_stat
+
+    - name: "Fail if 'expiring_template_path' Does Not Exist or is Not a File"
+      assert:
+        that:
+          - expiring_template_stat.stat.exists
+          - expiring_template_stat.stat.isreg
+        fail_msg: >
+          'expiring_template_path' ({{ expiring_template_path }}) does not exist or is not a regular file.
+
+    - name: "Stat 'expired_template_path'"
+      stat:
+        path: "{{ expired_template_path }}"
+      register: expired_template_stat
+
+    - name: "Fail if 'expired_template_path' Does Not Exist or is Not a File"
+      assert:
+        that:
+          - expired_template_stat.stat.exists
+          - expired_template_stat.stat.isreg
+        fail_msg: >
+          'expired_template_path' ({{ expired_template_path }}) does not exist or is not a regular file.
+
+    - name: "Fail if 'today' is Missing or Not a String"
+      assert:
+        that:
+          - today is defined
+          - today is string
+        fail_msg: >
+          'today' must be defined in vars/config.yml and be a string.
+
+    - name: "Stat 'log_dir'"
+      stat:
+        path: "{{ log_dir }}"
+      register: logdir_stat
+
+    - name: "Attempt to Create 'log_dir' if Missing"
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+        owner: "{{ log_dir_owner }}"
+        group: "{{ log_dir_group }}"
+        mode: "{{ log_dir_mode }}"
+      failed_when: false
+      register: logdir_create
+      when: not logdir_stat.stat.exists
+
+    - name: "Re-Stat 'log_dir' After Creation Attempt"
+      stat:
+        path: "{{ log_dir }}"
+      register: logdir_stat_after
+
+    - name: "Fail if 'log_dir' Does Not Exist After Creation Attempt"
+      assert:
+        that:
+          - logdir_stat_after.stat.exists
+        fail_msg: >
+          Directory '{{ log_dir }}' does not exist and could not be created.
+          {% if logdir_create is defined and logdir_create.msg is defined %}
+          Reason: {{ logdir_create.msg }}
+          {% endif %}
+
+    - name: "Find Old Log Files in 'log_dir'"
+      delegate_to: localhost
+      find:
+        paths: "{{ log_dir }}"
+        age: "{{ log_age }}"
+        recurse: false
+      register: old_logs
+
+    - name: "Remove Old Log Files in 'log_dir'"
+      delegate_to: localhost
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ old_logs.files }}"
+      when: old_logs.files | length > 0
+
+    - name: "Set Current Log File Name"
+      set_fact:
+        log_file: "{{ log_dir }}/password-expiry-{{ today }}.log"
+
+    - name: "Stat Today's Log File"
+      stat:
+        path: "{{ log_file }}"
+      register: logfile_stat
+
+    - name: "Attempt to Touch Today's Log File if Missing"
+      file:
+        path: "{{ log_file }}"
+        state: touch
+        owner: "{{ log_file_owner }}"
+        group: "{{ log_file_group }}"
+        mode: "{{ log_file_mode }}"
+      failed_when: false
+      register: logfile_create
+      when: not logfile_stat.stat.exists
+
+    - name: "Re-Stat Today's Log File After Creation Attempt"
+      stat:
+        path: "{{ log_file }}"
+      register: logfile_stat_after
+
+    - name: "Fail if Today's Log File Does Not Exist After Creation Attempt"
+      assert:
+        that:
+          - logfile_stat_after.stat.exists
+        fail_msg: >
+          Log file '{{ log_file }}' does not exist and could not be created.
+          {% if logfile_create is defined and logfile_create.msg is defined %}
+          Reason: {{ logfile_create.msg }}
+          {% endif %}
+
+
+- name: "✔ Check AD Password Expiry and Notify Users"
+  hosts: "{{ target_hosts }}"
+  gather_facts: false
+
+  vars_files:
+    vars/config.yml
+
+  tasks:
+
+    - name: "Run PowerShell on Windows Client"
+      win_shell: |
+        {{ lookup('template', script_template_path) }}
+      register: expiring_users
+      changed_when: false
+
+    - name: "Parse JSON Output"
+      set_fact:
+        expiring_user_list: "{{ expiring_users.stdout | from_json }}"
+      when: expiring_users.stdout | length > 0
+
+    - name: "Normalize 'expiring_user_list' if Required"
+      set_fact:
+        expiring_user_list: []
+      when: expiring_users.stdout | length == 0
+
+    - name: "Process Each User Found"
+      include_tasks: tasks/send-email-if-required.yml
+      vars:
+        sub_log_file: "{{ log_dir }}/password-expiry-{{ today }}.log"
+        sub_password_expiry_threshold: "{{ password_expiry_threshold }}"
+        sub_smtp_host: "{{ smtp_host }}"
+        sub_smtp_port: "{{ smtp_port }}"
+        sub_email_from: "{{ email_from }}"
+        sub_email_branding: "{{ email_branding }}"
+        sub_expiring_template_path: "{{ playbook_dir }}/{{ expiring_template_path }}"
+        sub_expired_template_path: "{{ playbook_dir }}/{{ expired_template_path }}"
+      loop: "{{ expiring_user_list }}"
+      loop_control:
+        label: "{{ item.DisplayName }}"
